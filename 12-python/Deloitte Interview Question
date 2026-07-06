@@ -1,0 +1,65 @@
+# DevOps Interview Prep — Scenario-Based Questions
+
+A quick-reference cheat sheet for common DevOps interview scenarios.
+
+---
+
+## 1. Staging works, prod fails sometimes
+- Compare staging vs prod setup (configs, secrets, versions)
+- Check if it happens under real traffic/load
+- Look at logs during the exact failure time
+- Think: "what's different in prod?"
+
+## 2. Dev wants to skip the pipeline
+- Say no — pipeline exists to catch bugs early
+- Ask why it's slow, fix that instead
+- Speed up: caching, parallel tests, smaller checks
+- Protect the process, don't remove it
+
+## 3. Manual steps in deployment
+- Automate the riskiest/most repeated step first
+- Priority = high risk + high frequency
+- Don't just pick the "easy" one
+
+## 4. Errors in prod, cause unknown
+- Go broad → narrow
+- Check: recent changes → infra health → config → app logs
+- Change one thing at a time to isolate cause
+
+## 5. Release caused downtime, rollback risky too
+- Compare: current damage vs rollback risk
+- If users are badly affected → rollback/disable feature
+- Always have a tested rollback plan ready in advance
+
+## 6. Cloud cost spiked after release
+- Check new/unused resources
+- Check autoscaling triggers
+- Check inefficient code (loops, queries)
+- Compare cost before vs after release
+
+## 7. Security scan blocking release
+- Don't bypass security
+- Sort issues by severity
+- Block only critical/high risk
+- Fix low-risk ones later, track them
+
+## 8. Teams using different tool versions
+- Standardize using IaC / shared config
+- Add CI check to catch version mismatch
+- One source of truth for versions
+
+## 9. Alerts during peak traffic
+- Check if real users are impacted (latency/errors)
+- If system handled peak fine → it's noise
+- Adjust alert thresholds based on normal peak data
+
+## 10. Leadership wants speed, team wants stability
+- Speed and stability aren't opposites
+- Use automation: CI/CD, canary release, feature flags
+- Smaller, frequent releases = safer AND faster
+
+---
+
+**Quick memory trick:**
+Every answer follows the same pattern —
+**Compare → Isolate → Prioritize by risk → Automate → Don't cut corners on safety.**

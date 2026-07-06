@@ -102,7 +102,8 @@
 - Helps avoid duplication, standardizes infra across teams/projects
 
 ### 4. Managing Terraform state files
-- Store state remotely (e.g., S3 + DynamoDB for locking)
+- Azure Storage Account (Blob Container) — used to store the Terraform state file remotely, similar to how S3 is used in AWS.
+Locking — Unlike AWS (which needs a separate DynamoDB table for locking), Azure Blob Storage has built-in locking using blob lease mechanism. So you don't need a separate service for locking — it's handled automatically.
 - Never store state locally in team projects
 - Use `terraform state` commands carefully for fixes
 - Enable state locking to avoid conflicts

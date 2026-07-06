@@ -1,0 +1,289 @@
+# DevOps Interview Q&A — Full Guide
+
+---
+
+## CI/CD
+
+### 1. CI vs CD vs Continuous Deployment
+- **CI (Continuous Integration):** devs merge code often, automated build + tests run on every commit
+- **Continuous Delivery:** code is always in a deployable state, but release to prod needs manual approval
+- **Continuous Deployment:** every passing change goes to prod automatically, no manual step
+
+### 2. Explain your CI/CD pipeline flow
+- Code pushed → triggers pipeline
+- Build → run unit tests → static code/security scan
+- Package (e.g., Docker image) → push to registry
+- Deploy to staging → run integration tests
+- Manual/auto approval → deploy to production
+- Post-deploy checks (health check, smoke test)
+
+### 3. Stages in CI/CD pipeline
+- Source (checkout code)
+- Build
+- Test (unit/integration)
+- Code quality/security scan
+- Package/Artifact creation
+- Deploy (staging → prod)
+- Post-deployment verification
+
+### 4. Problems CI/CD solves
+- Removes manual, error-prone deployments
+- Catches bugs early (before prod)
+- Faster, consistent releases
+- Easy rollback
+- Better visibility into what changed and when
+
+### 5. Troubleshooting pipeline failures
+- Check pipeline logs first (which stage failed)
+- Reproduce locally if possible
+- Check recent code/config changes
+- Check environment/credentials/permissions issues
+- Fix, re-run, and add a check to prevent recurrence
+
+### 6. Example: GitLab pipeline failure and fix
+- Example: pipeline failed due to expired runner token/cache corruption
+- Steps: checked job logs → found auth/cache error → cleared cache/regenerated token → pipeline passed
+- Added monitoring/alert so it's caught earlier next time
+
+### 7. Git branching strategy
+- Common: **Git Flow** or **trunk-based development**
+- Git Flow: main, develop, feature/*, release/*, hotfix/*
+- Trunk-based: short-lived feature branches, merge to main frequently
+
+### 8. Managing Git branches
+- Naming convention (feature/, bugfix/, hotfix/)
+- Delete branches after merge
+- Protect main/master branch (no direct push)
+- Regular cleanup of stale branches
+
+### 9. Backup before deleting stale branches
+- Yes — check if merged first (`git branch --merged`)
+- Tag or archive before deleting if unsure
+- Deleted branches still recoverable via reflog for a short time
+
+### 10. Code review and merge approval process
+- Developer raises PR/MR with description
+- At least 1-2 reviewers approve
+- CI checks (build/tests) must pass
+- No direct merge to main — only via approved PR
+- Squash/merge commit based on team convention
+
+### 11. Git Merge vs Git Rebase
+- **Merge:** combines branches, keeps full history, creates a merge commit
+- **Rebase:** moves commits on top of another branch, creates linear history
+- Use **merge** for shared/public branches
+- Use **rebase** for cleaning up local feature branch before merging
+
+### 12. What is Git
+- Distributed version control system
+- Tracks code changes, enables collaboration
+- Every developer has full history locally
+
+### 13. Declarative vs Scripted Pipeline (Jenkins)
+- **Declarative:** structured, easier syntax (`pipeline { stages {...} }`), recommended for most cases
+- **Scripted:** Groovy-based, more flexible/complex, full programming control
+
+---
+
+## Terraform
+
+### 1. Why Terraform is used
+- Infrastructure as Code (IaC) — define infra in files, version controlled
+- Consistent, repeatable environment creation
+
+### 2. Advantages over manual provisioning
+- No manual clicking in console (less human error)
+- Easily repeatable across environments
+- Version controlled, reviewable via PR
+- Fast to scale/replicate infra
+
+### 3. Experience with Terraform modules
+- Modules = reusable blocks of infra code (e.g., VPC module, EC2 module)
+- Helps avoid duplication, standardizes infra across teams/projects
+
+### 4. Managing Terraform state files
+- Store state remotely (e.g., S3 + DynamoDB for locking)
+- Never store state locally in team projects
+- Use `terraform state` commands carefully for fixes
+- Enable state locking to avoid conflicts
+
+### 5. Challenges faced in Terraform
+- State file conflicts → solved with remote state + locking
+- Drift between actual infra and code → solved with regular `terraform plan` checks
+- Large blast radius on `apply` → solved by splitting into smaller modules/workspaces
+
+---
+
+## Docker
+
+### 1. What is Docker and why used
+- Containerization platform — packages app + dependencies together
+- Ensures "runs the same everywhere" (dev, staging, prod)
+
+### 2. ENTRYPOINT vs CMD
+- **ENTRYPOINT:** defines the fixed command that always runs
+- **CMD:** default arguments, can be overridden at runtime
+- Often used together: ENTRYPOINT for the binary, CMD for default args
+
+### 3. Docker Image vs Container
+- **Image:** blueprint/template (read-only)
+- **Container:** running instance of an image
+
+### 4. Multi-stage builds
+- Use multiple `FROM` stages in one Dockerfile
+- Build in one stage, copy only final artifact to a lightweight final image
+- Reduces final image size (no build tools included)
+
+### 5. Reducing Docker image size (why)
+- Use smaller base images (alpine, distroless)
+- Multi-stage builds
+- Remove unnecessary packages/cache after install
+- Smaller size = faster deploy, smaller attack surface
+
+### 6. Optimizing images for performance/security
+- Use minimal base images
+- Run as non-root user
+- Scan images for vulnerabilities
+- Pin specific versions (avoid `latest` tag)
+- Remove unused layers/files
+
+### 7. Dockerfile creation process
+- Choose base image
+- Set working directory
+- Copy dependency files, install dependencies (cache-friendly order)
+- Copy app code
+- Expose port
+- Define ENTRYPOINT/CMD
+
+---
+
+## Kubernetes
+
+### 1. What is Kubernetes and why used
+- Container orchestration platform
+- Manages deployment, scaling, healing, networking of containers automatically
+
+### 2. Kubernetes architecture
+- **Control Plane:** API server, scheduler, controller manager, etcd
+- **Worker Nodes:** kubelet, kube-proxy, container runtime
+- Pods run on nodes, scheduled by control plane
+
+### 3. ConfigMap vs Secret
+- **ConfigMap:** stores non-sensitive config data (plain text)
+- **Secret:** stores sensitive data (passwords, tokens), base64 encoded (not fully secure alone — should combine with encryption/RBAC)
+
+### 4. Example K8s deployment/config changes handled
+- Updated resource limits/requests to fix OOM issues
+- Rolled out new image version via rolling update
+- Adjusted replica count for scaling
+- Fixed misconfigured liveness/readiness probes
+
+### 5. Troubleshooting pod issues
+- `kubectl get pods` → check status (CrashLoopBackOff, Pending, etc.)
+- `kubectl describe pod` → check events
+- `kubectl logs <pod>` → check application errors
+- Check resource limits, node capacity, image pull errors
+
+### 6. Deployment vs StatefulSet vs DaemonSet
+- **Deployment:** stateless apps, pods are interchangeable
+- **StatefulSet:** stateful apps, stable network identity + storage (e.g., databases)
+- **DaemonSet:** runs one pod per node (e.g., logging/monitoring agents)
+
+### 7. Managing scaling and high availability
+- Horizontal Pod Autoscaler (HPA) based on CPU/memory
+- Multiple replicas across nodes/zones
+- Readiness/liveness probes for self-healing
+- Cluster autoscaler for node-level scaling
+
+---
+
+## AWS
+
+### 1. AWS services worked with
+- EC2, S3, IAM, VPC, RDS, Lambda, CloudWatch, ECS/EKS, Route 53
+
+### 2. AWS improvements/changes implemented
+- Example: right-sized EC2 instances to cut cost
+- Set up auto-scaling for variable traffic
+- Migrated static hosting to S3 + CloudFront
+- Tightened IAM policies (least privilege)
+
+### 3. Experience with EC2, S3, IAM, VPC
+- **EC2:** provisioning, scaling, patching instances
+- **S3:** storage, static hosting, lifecycle policies
+- **IAM:** roles, policies, least-privilege access
+- **VPC:** subnets, route tables, security groups, NAT gateway setup
+
+### 4. Monitoring applications/infrastructure
+- CloudWatch metrics + alarms
+- Custom dashboards for key metrics (CPU, latency, errors)
+- Log aggregation via CloudWatch Logs or ELK
+
+### 5. AWS cost optimization
+- Right-sizing instances
+- Using spot/reserved instances where possible
+- S3 lifecycle policies (move old data to cheaper storage)
+- Cleaning up unused resources (idle EC2, unattached EBS volumes)
+
+---
+
+## Monitoring & Ticketing
+
+### 1. Monitoring tools used
+- Prometheus, Grafana, CloudWatch, ELK Stack, Datadog (mention whichever you've used)
+
+### 2. Monitoring app/infra health
+- Metrics (CPU, memory, latency, error rate)
+- Alerts on thresholds
+- Dashboards for real-time visibility
+- Log-based monitoring for errors/exceptions
+
+### 3. Experience with Prometheus/Grafana/CloudWatch/ELK
+- **Prometheus:** metrics collection + alerting rules
+- **Grafana:** dashboards/visualization
+- **CloudWatch:** AWS-native monitoring/alarms
+- **ELK:** centralized logging, search, and visualization
+
+### 4. Ticketing tool used
+- Jira, ServiceNow, or similar (name the one you use)
+
+### 5. Handling production incidents/escalations
+- Acknowledge alert → assess impact/severity
+- Communicate status to stakeholders
+- Investigate root cause, apply fix/rollback
+- Document incident, do post-mortem/RCA
+- Update runbooks to prevent recurrence
+
+---
+
+## Shell Scripting & Linux
+
+### 1. Linux commands used regularly
+- `ls`, `cd`, `grep`, `awk`, `sed`, `top`/`htop`, `ps`, `df`, `du`, `chmod`, `chown`, `systemctl`, `journalctl`, `netstat`/`ss`, `curl`
+
+### 2. Automation tasks via shell scripting
+- Log cleanup scripts
+- Health check/monitoring scripts
+- Backup automation
+- Deployment helper scripts
+
+### 3. Are scripts used by team? Impact
+- Yes — shared scripts save manual repetitive work
+- Reduced deployment time / manual errors
+- Standardized process across team members
+
+### 4. Troubleshooting Linux server issues
+- Check system resources: `top`, `free`, `df -h`
+- Check logs: `/var/log/`, `journalctl`
+- Check running services: `systemctl status`
+- Check network: `netstat`, `ping`, `curl`
+
+### 5. Example shell script for real-time problem
+- Example: script to auto-detect disk usage > 80% and send alert/email
+- Example: script to rotate/clean old logs automatically via cron
+- Example: script to check service health and auto-restart if down
+
+---
+
+**Quick memory trick for all sections:**
+**Define → Compare → Explain your real experience → Mention a real problem you solved.**

@@ -99,7 +99,7 @@ A: `dig` gives more detail (TTL, authority section, flags) and scriptable output
 ### 6. curl
 
 **Q: An API returns 200 in Postman but fails from a server via cron job. What do you check?**
-A: `curl -v` from that server to see the full request/response, TLS handshake, headers, and redirects — often reveals missing auth headers, DNS resolution differences, or an expired cert not trusted by the server's CA bundle.
+I’d run curl -v from that exact server to reproduce it directly — that shows me the full request and response, the TLS handshake, and any redirects. Most often this comes down to one of three things: missing or expired auth headers, since Postman often has a saved token that the cron script doesn’t have or hasn’t refreshed; a DNS resolution difference, where the server resolves the hostname differently than my laptop does; or a TLS trust issue, where the server’s CA bundle is outdated and doesn’t trust the issuing certificate authority, even though the cert itself is valid. I’d also check if curl needs -L to follow redirects, since Postman follows those automatically by default. And if none of that explains it, I’d look at things outside the request itself — like whether the cron job runs with different environment variables, or whether the server’s outbound IP is even allowlisted on the API side.
 
 **Q: How do you test a specific TLS version or check certificate expiry with curl?**
 A: `curl -v --tlsv1.2 https://example.com` and inspect certificate info in the verbose output, or `curl -vI` for headers-only with handshake details.

@@ -83,7 +83,7 @@ The root cause is usually on the AWS side, not the instance itself — the subne
 ### 4. traceroute / tracepath
 
 **Q: Latency spikes to a service only in one region. How do you isolate where the delay is introduced?**
-A: `traceroute` (or `mtr` for continuous stats) to see per-hop latency and identify which hop introduces delay — points to an ISP, cloud peering point, or misconfigured routing rather than the app itself.
+I’d start with traceroute or mtr — mtr’s better because it gives continuous per-hop stats instead of a single snapshot. I’d run it from the affected region to the service, and also from a healthy region for comparison. Looking at the hop-by-hop latency, if one specific hop shows a sudden jump and everything after stays elevated, that hop is where the delay is introduced. If that hop resolves to an ISP or peering point outside our own network, that tells me it’s not our application or our infrastructure — it’s likely an ISP or cloud peering issue, and I’d check things like AWS’s Health Dashboard or Reachability Analyzer to confirm on the cloud side
 
 **Q: traceroute shows `* * *` at some hops but still reaches the destination — is that a problem?**
 A: Not necessarily — some routers deprioritize or drop ICMP/UDP probes used by traceroute (rate limiting) but still forward actual traffic fine.

@@ -147,7 +147,8 @@ A: Duplicate hostnames from cloned AMIs/images causing conflicts in service disc
 ### 12. iptables / nftables
 
 **Q: A pod-to-pod connection works on one node but not another in the same Kubernetes cluster. What do you inspect?**
-A: `iptables -L -n -v` (or `nft list ruleset`) to check for CNI-managed rules, look for DROP counters incrementing on the affected chain, and compare rule sets between the healthy and unhealthy node.
+"Since it's node-specific and not pod-specific, I'd suspect something about that node's network rules rather than the pods themselves. Ta run iptables -L -n -von both the healthy and unhealthy node - the - v flag matters because it shows packet counters, so I can watch a DROP rule's counter increment in real time while re-triggering the connection, which tells me exactly which rule is blocking traffic.
+Then Id diff the full rule sets between the two nodes using iptables-save, looking for missing CNI-injected chains or stale rules. Usually this points to the CNI agent - Calico, Cilium, whatever's in use — not being fully healthy on that node, so I'd also check if that node's CNI daemonset pod is actually running cleanly or stuck in a crash loop, since a node that failed to fully reconcile its NetworkPolicy will have incomplete rules compared to a healthy node."
 
 **Q: Why are companies moving from iptables to nftables?**
 A: nftables offers better performance at scale (single unified framework), atomic rule updates, and more efficient rule matching — relevant for large K8s clusters using heavy NAT/firewall rules.

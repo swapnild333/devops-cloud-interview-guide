@@ -91,7 +91,7 @@ A: Not necessarily — some routers deprioritize or drop ICMP/UDP probes used by
 ### 5. nslookup / dig
 
 **Q: New DNS record isn't resolving after a Route53/CloudFlare change. How do you debug?**
-A: `dig example.com` to see the actual answer, TTL, and which nameserver responded (`dig +trace` for the full resolution path). Also check `dig @8.8.8.8` vs the local resolver to isolate propagation delay vs. local DNS cache.
+First, I’d run dig example.com to see the actual answer being returned and its TTL. Then I’d compare that against a public resolver directly — dig @8.8.8.8 example.com — versus my local resolver. If the public resolver shows the new record but my local query shows the old one, that’s just local caching, and it’ll clear once the TTL expires. If both show the old record, I’d run dig +trace to walk the full resolution path — root servers, TLD servers, then the authoritative nameserver — to confirm the domain’s NS records actually point to Route53 or Cloudflare. Sometimes the record inside Route53 is correct, but the registrar’s NS delegation was never updated, so nobody’s actually asking Route53 in the first place. Querying the authoritative nameserver directly bypasses all caching, so if that still shows the wrong answer, I know the problem is on the DNS provider side — not propagation
 
 **Q: dig vs nslookup — why do senior engineers usually prefer dig?**
 A: `dig` gives more detail (TTL, authority section, flags) and scriptable output, better for automation and deeper debugging; `nslookup` is more interactive/legacy.

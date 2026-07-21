@@ -54,6 +54,25 @@ A: `ifconfig` is deprecated/removed on many modern distros (part of unmaintained
 **Q: Two EC2 instances in different subnets within the same VPC can't talk to each other. What do you check?**
 A: `ip route` on both hosts to confirm a route exists to the peer subnet, then cross-check the actual VPC route table/NACLs on the cloud side.
 
+
+	•	Look at the destination instance’s SG inbound rules. Check if it lets in traffic from the source instance’s SG (or its CIDR), using the correct port and protocol.
+	•	SGs are stateful, meaning return traffic is automatically allowed once the first request gets in. But that first request still needs an explicit inbound rule on the destination side.
+
+2. Network ACLs
+
+	•	NACLs are different from SGs — they are stateless. This means you must check both inbound and outbound rules, and you need to check them on both the source subnet and the destination subnet.
+	•	Pay attention to DENY rules. If a DENY rule has a lower rule number than an ALLOW rule, the DENY wins, even if the ALLOW rule looks like it should work.
+
+3. Route tables
+
+	•	Make sure each subnet’s route table has a local route covering the VPC’s CIDR range. This is usually set up automatically, but confirm it hasn’t been changed or removed.
+	•	If both subnets are in the same VPC, this local route should handle everything on its own. You don’t need any extra custom routes unless someone has changed the default setup.
+
+4. Instance-level checks
+
+	•	Run ip route on both instances to make sure the operating system itself can see a path to the other subnet.
+	•	Check the OS-level firewall (like iptables, firewalld, or Windows Firewall) on each instance. Even if SGs and NACLs are fine, the OS firewall can still block traffic on its own.
+
 **Q: What does a missing default route look like, and what breaks?**
 A: No `default via <gateway>` entry — the host can talk to its local subnet but nothing outside it, including DNS resolution to external resolvers.
 

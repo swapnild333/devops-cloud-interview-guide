@@ -74,7 +74,11 @@ A: `ip route` on both hosts to confirm a route exists to the peer subnet, then c
 	•	Check the OS-level firewall (like iptables, firewalld, or Windows Firewall) on each instance. Even if SGs and NACLs are fine, the OS firewall can still block traffic on its own.
 
 **Q: What does a missing default route look like, and what breaks?**
-A: No `default via <gateway>` entry — the host can talk to its local subnet but nothing outside it, including DNS resolution to external resolvers.
+If a default route is missing, the host will only be able to talk to devices in its own subnet — because that traffic uses the local route which doesn’t need a gateway. But anything outside the subnet — other subnets, the internet, even DNS — will fail, because there’s no route telling the OS how to get there.
+
+This is actually a tricky one to debug because ping tests within the subnet still work fine, so it can look like networking is healthy when it’s not. The way I’d spot it is running ip route on the host — a healthy host shows a default via <gateway> line, and if that’s missing, that’s the smoking gun.
+
+The root cause is usually on the AWS side, not the instance itself — the subnet’s route table is missing a 0.0.0.0/0 route to an internet gateway or NAT gateway. So the fix isn’t something you do inside the OS, it’s adding that route back in the VPC route table
 
 ### 4. traceroute / tracepath
 

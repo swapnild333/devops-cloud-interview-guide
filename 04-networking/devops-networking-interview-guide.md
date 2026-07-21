@@ -115,7 +115,7 @@ A: `--timeout` and `--tries` to fail fast instead of hanging the pipeline; also 
 ### 8. netstat / ss
 
 **Q: A service claims to be running but clients get "connection refused." How do you verify it's actually listening?**
-A: `ss -tulnp` (or legacy `netstat -tulnp`) to confirm the process is bound to the expected port and interface — 0.0.0.0 vs 127.0.0.1 is a classic gotcha.
+"I'd run ss -tulnp - or netstat -tuln on older systems - filtered to that port, to see if the process is actually bound and listening. The classic gotcha here is the difference between binding to 127.0.0.1 versus o. o.o.0. If it's only on 127.0.0.1, the app is only reachable from localhost, so any external client gets connection refused, even though the process is technically running fine. If it is correctly bound to 0.0.0.0 and clients still can't connect, I'd move outward - check the host's own firewall with iptables, then Security Groups or NACLS if it's cloud-hosted, and if it's containerized, confirm the Docker port mapping actually publishes that port to the host, since a container can be listening perfectly inside itself and still be completely unreachable from outside."
 
 **Q: Why is `ss` recommended over `netstat` today?**
 A: `ss` is faster (reads directly from kernel netlink instead of /proc), and `netstat` is deprecated on modern Linux distros.

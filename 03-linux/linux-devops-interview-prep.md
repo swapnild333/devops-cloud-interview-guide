@@ -234,6 +234,8 @@ Use `visudo` — **never** edit `/etc/sudoers` directly.
 ### 28. Root password lost — what do you do?
 Boot into GRUB recovery → single-user/rescue mode → remount filesystem writable → reset root password → reboot.
 
+On EC2 there’s no interactive GRUB access like a physical box, so the fix is a volume swap: stop the instance, detach its root EBS volume, attach it to a separate healthy instance as a secondary disk, mount and chroot into it, reset the password directly in that filesystem’s /etc/shadow, then detach and reattach the volume back to the original instance as its root volume and start it up. The key idea is you’re never logging into the broken instance at all — you’re editing its password file from outside, using an instance you already have working access to.”
+
 ### 29. What is SELinux and why is disabling it risky?
 Provides Mandatory Access Control (MAC) — restricts process access even when standard Linux permissions would allow it.
 **Prod angle:** A compromised web server has its blast radius limited by SELinux policy.

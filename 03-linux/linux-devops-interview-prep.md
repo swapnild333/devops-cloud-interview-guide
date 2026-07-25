@@ -401,6 +401,7 @@ cat /etc/resolv.conf
 dig hostname
 cat /etc/hosts
 ```
+IP works but hostname doesn’t, so it’s isolated to name resolution. I’d check /etc/hosts first since that’s checked before DNS — if nothing’s there, I move to /etc/resolv.conf and check what nameserver is configured. In this case it pointed to an IP that wasn’t the expected VPC resolver. Running dig against it timed out, confirming the resolver itself was unreachable, not that the DNS record was missing — I proved that by querying the correct VPC resolver directly and getting a valid answer. So the root cause was a stale or wrong nameserver entry in /etc/resolv.conf, likely from a bad DHCP options set. The fix is either correcting the file directly, or if it’s managed by systemd-resolved or DHCP, fixing it at the source — the VPC’s DHCP options — and letting the instance repull the correct config
 **Prod angle:** Classic root cause — `/etc/resolv.conf` points to an incorrect/unreachable DNS server.
 
 ---

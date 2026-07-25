@@ -333,6 +333,8 @@ ip route                # routing table
 ip route | grep default # default route
 ```
 **Prod angle:** App can't reach the DB — missing default route means packets never leave the server.
+I’d start with ip addr to confirm the interface is up and has a valid IP, which rules out a NIC-level problem. Then ip route to see the full routing table, and specifically ip route | grep default to check for a default route. In this case there was none — only the local subnet route existed. That explains the exact symptom: the app server could reach anything in its own subnet, but the DB server was in a different subnet, and with no default route, the kernel has no path to send that traffic anywhere else — it gets dropped locally, which is why you see ‘No route to host’ rather than a timeout. I’d double check on the AWS side that the subnet’s route table itself is fine — in this case it was, which told me the problem was specifically at the OS level on this one instance, not a VPC misconfiguration. That usually points to something like a botched network restart or a manual route deletion, and the fix is just adding the default route back, either temporarily with ip route add or permanently through netplan or NetworkManager depending on the distr
+
 
 ### 42. TCP vs UDP (with examples)
 - **TCP** — reliable, ordered, connection-oriented (acks/retransmits). *Examples: HTTPS, SSH, databases, email.*

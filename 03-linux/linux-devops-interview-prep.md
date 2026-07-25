@@ -279,6 +279,9 @@ free -m
 vmstat
 ```
 **Prod angle:** Java memory leak → RAM full → OOM Killer terminates the app.
+When memory runs out, the system first starts using swap, which tanks performance because swap is disk I/O and much slower than RAM — you’d see that in vmstat as high si/so swap activity and high iowait, basically the system thrashing before anything actually crashes. If it keeps climbing, the kernel’s OOM Killer steps in and kills a process — usually the one with the highest memory usage — to protect the system from crashing entirely.
+
+To debug it, I’d check dmesg -T | grep -i 'killed process' to see exactly what got killed and how much memory it had grown to. In this case it was a Java process at over 14GB RSS, which is the confirmation of a memory leak rather than just normal load. What’s interesting is that the JVM’s -Xmx heap flag was capped at 4GB, but the actual process memory was way higher — that gap tells you the leak isn’t in the Java heap itself, it’s off-heap, so I’d check thread count with jstack, since a thread leak is a very common cause — each thread reserves native stack memory outside the heap, so Xmx never catches it. The immediate fix is just restarting the service to restore availability, but the real fix is finding and patching the actual leak, and in the meantime setting an explicit memory limit on the service so if it happens again, it fails cleanly and gets restarted instead of taking the whole host down with it.”
 
 ### 35. RAM vs Swap
 RAM = fast, volatile, primary memory. Swap = disk-based, much slower, backup memory used under pressure.

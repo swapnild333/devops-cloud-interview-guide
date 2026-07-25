@@ -322,6 +322,8 @@ sar -n DEV   # Network
 ```
 **Prod angle:** Load average 40 but CPU only 20% — root cause is disk I/O wait, not CPU.
 
+High load average doesn’t automatically mean CPU-bound — that’s the trap here. I’d start with top, but instead of just looking at the load number, I’d look at the CPU breakdown line specifically — id versus wa. In this case CPU was mostly idle, but iowait was extremely high, which tells me processes are stuck waiting on disk, not actually computing. I’d confirm that with iostat -x, looking at %util and await — both were maxed out, confirming the disk itself was saturated. Then I’d find which processes were in uninterruptible sleep, D state, using ps aux, since those are exactly the processes that inflate load average without using CPU. In this case it was MySQL doing heavy writes, and I’d also check disk space, since a nearly full disk can make I/O even worse. The key lesson is that load average counts I/O-blocked processes the same as CPU-runnable ones, so a high load number with low CPU usage is a strong signal to go straight to disk I/O, not scale up CPU, which is the instinct a lot of people have and ends up being the wrong fix entirely
+
 ---
 
 ## Section 5: Networking & Services

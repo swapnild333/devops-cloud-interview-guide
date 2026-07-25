@@ -369,6 +369,7 @@ systemctl start nginx    # starts now (current session)
 systemctl enable nginx   # starts automatically at boot
 ```
 **Prod angle:** Server reboots, app is down — service was started manually before but never enabled.
+systemctl start only affects the current boot session — it doesn’t persist across a reboot. systemctl enable is what actually creates the symlink that tells systemd to start the service automatically on future boots. A really common incident pattern is someone deploys a service, runs start to get it running, everything’s fine for weeks, then the server reboots for some unrelated reason — patching, an instance restart — and the app just doesn’t come back, because it was never enabled in the first place. I’d confirm this with systemctl status, which actually tells you directly in the Loaded line whether it’s enabled or disabled, plus systemctl is-enabled to check explicitly. I’d also check journalctl for that service since the reboot — if there are zero log entries, that confirms systemd never even attempted to start it, versus it crashing on startup, which would show a different failure pattern. The fix is just running enable, and then start to bring it up immediately without waiting for the next reboot.”
 
 ### 47. Troubleshooting a service that won't start
 Workflow: `Status → Logs → Configuration → Dependencies → Permissions`

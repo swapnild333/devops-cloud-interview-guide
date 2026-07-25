@@ -239,6 +239,12 @@ Provides Mandatory Access Control (MAC) — restricts process access even when s
 **Prod angle:** A compromised web server has its blast radius limited by SELinux policy.
 **Tip:** Never say "we just disable it" — interviewers dislike that answer.
 
+SELinux provides Mandatory Access Control — it’s a separate, additional layer on top of standard Unix file permissions. Even if normal file permissions would technically allow a process to do something, SELinux can still block it based on policy, because processes are confined to specific security contexts, or domains, that only permit certain actions.
+
+The value of this in production is blast radius containment. If a web server process gets compromised — say through an RCE — normal Unix permissions might allow that process to read or write way more than it should, because it’s running as whatever user, with whatever permissions that user has. SELinux confines it specifically to the httpd_t domain, so even a compromised process can only do what that narrow policy explicitly allows — it can’t just wander off and read /etc/shadow or write to arbitrary system directories, even though the Unix permissions might technically permit it for that user.
+
+So when SELinux blocks something, I wouldn’t just disable it — I’d check ausearch -m avc to see exactly what was denied and why, which usually points to either a mislabeled file, fixable with restorecon, or a genuine policy gap, which I’d handle with audit2allow to generate a minimal, targeted policy exception rather than turning off enforcement for the entire host. Disabling SELinux entirely removes that whole protective layer, not just for the one issue you’re debugging, but for every other process on that server too.”
+
 ### 30. Checking SELinux status/mode
 ```
 sestatus

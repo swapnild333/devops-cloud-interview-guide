@@ -255,6 +255,10 @@ A process is an independent program with its own memory space; a thread is a lig
 **Prod angle:** A Java process spawns 200 threads and becomes slow — investigation focuses on thread usage, not process count.
 **Tip:** "Threads share memory, processes do not."
 
+The key distinction is that a process has its own isolated memory space, while a thread is a lightweight unit of execution inside a process, and threads within the same process share that process’s memory. So when a Java app slows down, checking process count with ps aux tells you almost nothing, because you might only see one process even if it’s internally spawned hundreds of threads.
+
+I’d check thread count specifically — either ps -eLf filtered to that PID, or /proc/<pid>/status, which showed over 200 threads for a single process. That’s abnormally high, so I’d pull a thread dump with jstack to see what state those threads are actually in. In this case, most were sitting in WAITING, doing nothing productive but still consuming memory for their stack and adding scheduling overhead — which explains the high CPU usage even though a lot of the app was actually idle. Looking at the thread names, they pointed to a new thread pool being created repeatedly instead of being reused, which is a common bug — something like instantiating an ExecutorService inside a request handler instead of once at startup. Since threads share memory but each one still reserves its own stack and adds context-switching overhead, an unbounded thread leak like this degrades performance even without a memory leak in the traditional heap sense — it’s really a resource management bug at the threading level, not the process level.”
+
 ### 32. Finding high CPU/memory processes
 ```
 top / htop

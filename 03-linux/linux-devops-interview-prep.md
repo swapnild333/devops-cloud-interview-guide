@@ -353,6 +353,9 @@ nslookup google.com
 cat /etc/hosts
 ```
 **Prod angle:** Temporary `/etc/hosts` entry as a workaround when DNS is down.
+“/etc/hosts is checked before DNS, so it’s a quick way to force a specific hostname-to-IP mapping without depending on DNS at all. A real production use case is during a DNS outage — if DNS is fully down and a service absolutely needs to reach a dependency right now, adding a temporary entry to /etc/hosts bypasses DNS entirely and restores connectivity immediately, buying time while the actual DNS issue gets fixed separately.
+
+The important part isn’t just adding the entry — it’s making sure it’s clearly documented as temporary, ideally with a comment right in the file noting why it’s there and a ticket reference, because an undocumented emergency override is a classic way to cause a second, more confusing incident later. Once DNS is confirmed working again, that entry needs to be explicitly removed — you don’t want stale hardcoded IPs silently overriding correct DNS answers forever.”
 
 ### 45. Checking if a port is open/listening
 ```

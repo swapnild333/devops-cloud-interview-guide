@@ -377,6 +377,7 @@ systemctl status nginx
 journalctl -xe
 ```
 **Prod angle:** Nginx fails to start — logs show "port 80 already in use."
+I’d start with systemctl status nginx to confirm it actually failed and see the exit code, then go straight to journalctl -xe -u nginx for the real error — in this case it showed bind() to 0.0.0.0:80 failed, Address already in use. That tells me it’s a port conflict, not a config or permissions issue. I’d confirm what’s actually holding port 80 with ss -tulnp, which showed Apache already running and bound there — probably left over from provisioning before nginx was installed. I’d also run nginx -t just to rule out a config syntax error at the same time, since that’s another common reason for a failed start. Once I confirmed it was purely the port conflict, the fix was just stopping and disabling Apache, since nginx was meant to be the actual web server here, then starting nginx and verifying with ss that it was now the one bound to port 80.”
 
 ### 48. Firewall tools in Linux
 `firewalld`, `iptables`, `nftables`, `ufw`, cloud Security Groups.

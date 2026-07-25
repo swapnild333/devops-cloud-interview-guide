@@ -271,6 +271,9 @@ renice 5 -p 1234          # change priority of running process
 ```
 Priority scale: `-20` (highest) to `19` (lowest), `0` default.
 **Prod angle:** Deprioritize a backup job on a DB server so the DB stays responsive.
+Nice values range from -20, highest priority, to 19, lowest, with 0 as default. If I’ve got a backup job competing with a production database for CPU, I’d either start it with nice -n 15 backup.sh if it hasn’t started yet, or use renice 15 -p <pid> if it’s already running — renice is useful because it lets you deprioritize a job on the fly without killing and restarting it, which matters a lot if it’s mid-backup.
+
+One thing I’d add though — nice only affects CPU scheduling priority. Backup jobs are usually disk I/O heavy, not CPU heavy, so the real bottleneck is often disk contention, not CPU contention. In that case I’d also use ionice to lower the job’s I/O priority, since that’s usually the more impactful fix for this specific kind of DB-versus-backup contention. In practice I’d combine both — nice for CPU, ionice for disk — to make sure the backup job yields to the database on both fronts whenever there’s contention, while still completing in the background.”
 
 ### 34. What happens when the system runs out of memory?
 RAM exhausted → swap used → performance drops → OOM Killer may terminate processes to protect stability.

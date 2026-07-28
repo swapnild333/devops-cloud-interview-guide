@@ -72,6 +72,16 @@ ln -s file1 file2   # soft link
 **Prod angle:** Blue-green deployments — a symlink like `current-release → release-v11` allows instant cutover.
 **Tip:** Hard Link → Inode. Soft Link → Path.
 
+“A hard link is basically two names pointing to the exact same file — not a copy, the actual same data. If you delete one name, the file is still fine, because the data only really disappears once every name pointing to it is gone.
+
+A soft link, or symlink, is different — it’s more like a shortcut. It’s its own small file that just points to another file’s location. If the original file gets deleted, the symlink is left pointing at nothing — it’s broken.
+
+The real-world use case I’d bring up is deployments. Companies often have a folder like current-release that’s actually a symlink pointing to a versioned folder, like release-v10. The app always runs through current-release, never a specific version directly. When you want to deploy a new version, you build and fully test it in a new folder, release-v11, without affecting anything live. Then, when you’re ready, you just switch the symlink to point at release-v11 instead. That switch is instant — there’s no half-old, half-new state in between.
+
+And if something goes wrong after that, rollback is just as fast — you point the symlink back to the old version. No redeploying anything, because the old release folder is still sitting there untouched.
+
+A hard link wouldn’t work for this, because it’s permanently tied to one specific file — you can’t just redirect it to something else later. A symlink is just a path, so you can repoint it anytime, which is exactly what you need for quick, safe deployments and instant rollbacks.”
+
 ### 8. What happens if `/etc/fstab` has a wrong entry?
 Filesystems may fail to mount at boot; severe cases → emergency mode or failed boot.
 ```

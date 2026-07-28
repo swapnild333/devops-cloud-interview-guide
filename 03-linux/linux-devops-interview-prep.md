@@ -45,6 +45,10 @@ hostnamectl             # full host info
 ```
 **Prod angle:** K8s node instability traced to a kernel networking bug — checking kernel version first prevents chasing the wrong root cause.
 
+“cat /etc/os-release gives the OS distribution and version, uname -r gives the specific kernel version, and hostnamectl gives a combined summary of both plus architecture and virtualization info. In a Kubernetes context specifically, kubectl get nodes -o wide is really useful because it shows kernel version per node directly, so you can spot a mismatch across the fleet in one command without SSHing into every node individually.
+
+The production case where this really matters is node-specific instability that looks like it should be an application or networking config problem, but turns out to be a kernel-level bug. In a case like that, I’d check kernel versions across all nodes first — it takes under a minute — and if one node is running an older kernel build than the rest, that’s an immediate lead. In this case it turned out to be a known conntrack table exhaustion issue in that specific older kernel build, confirmed by seeing ‘table full, dropping packet’ messages in dmesg. The reason checking kernel version first matters is that it’s a really fast check that can immediately rule out — or rule in — an entire class of root causes, versus spending hours debugging the application or Kubernetes config layer when the actual problem was two layers below all of that, in the host OS itself.”
+
 ### 6. What is an inode and why does it matter?
 Filesystem structure storing metadata — owner, permissions, size, timestamps, disk block locations. **Does NOT store the filename** (filename → inode → data blocks is a separate mapping).
 ```

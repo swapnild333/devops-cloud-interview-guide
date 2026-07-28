@@ -58,6 +58,10 @@ find /var -type f | wc -l    # find dirs creating excess files
 **Prod angle (classic):** `df -h` shows 40% disk used (looks healthy) but apps can't create files/pods fail — because `df -i` shows inodes 100% used. Disk space ≠ available inodes.
 **Tip:** "A filesystem can have free space but still fail due to inode exhaustion."
 
+“An inode stores a file’s metadata — owner, permissions, size, timestamps, and pointers to where its data actually lives on disk — but it doesn’t store the filename itself. The filename-to-inode mapping is a separate thing, held in the directory entry. This matters because every filesystem has a fixed number of inodes set at creation time, completely separate from how much raw disk space is available.
+
+The classic production scenario is df -h showing plenty of free space, but the system still can’t create new files, because df -i shows inodes are fully exhausted. Every file, no matter how small, consumes exactly one inode, so a huge number of tiny files can exhaust all available inodes while barely touching actual disk space. I’d track it down with df -i first to confirm that’s actually the problem, then narrow down which directory is consuming them, often with something like counting files per top-level directory recursively. In a case I’d expect to see in practice, this is usually caused by something like a misconfigured logging setup creating a new file every second instead of appending to and rotating one file — so you end up with millions of tiny log files eating every inode on the filesystem. The fix is cleaning up the excess files and fixing whatever’s generating them, but the bigger lesson is that disk space and inode availability are two completely separate resources, and monitoring only disk usage will completely miss this failure mode until it’s already taken the system down
+
 ### 7. Hard link vs soft (symbolic) link
 - **Hard link** → points directly to the inode; survives deletion of the original filename.
 - **Soft link** → points to a file path; breaks if the target is removed.

@@ -196,6 +196,10 @@ sar
 Workflow: `Application slow → check CPU → check memory → check disk I/O`
 **Prod angle:** DB latency increase traced to EBS throughput saturation.
 
+Following the standard workflow, I’d check CPU first with top — in this case CPU itself wasn’t maxed, but iowait was already elevated, which is an early hint. I’d rule out memory/swapping next, since swap thrashing can also show up as high iowait, but there was no swap usage here, confirming it was genuinely disk-related. Then iostat -x confirmed it directly — disk utilization was near 100% with high average wait time per request. iotop confirmed it was MySQL generating the load, which made sense given it’s a DB latency issue.
+
+The EBS-specific piece is using sar -d to look at queue depth alongside throughput — in this case throughput was plateaued at a steady rate with a growing request queue, which is a specific pattern: it’s not just ‘disk is busy,’ it’s hitting a hard provisioned ceiling. Checking the actual EBS volume configuration confirmed it — a gp3 volume provisioned at 125 megabytes per second throughput, and CloudWatch metrics showed the volume pinned right at that ceiling for the entire incident window. So the disk itself wasn’t failing or degraded, the workload had simply grown past what was provisioned. The fix on gp3 is actually pretty painless — you can increase provisioned throughput and IOPS live, without downtime or needing to resize or migrate the volume, and then the real follow-up is right-sizing based on actual sustained load and adding alerting on throughput percentage specifically, rather than just raw disk utilization, so this gets caught before it turns into a customer-facing latency incident next time
+
 ### 19. What is `fsck` and when to use it?
 Checks/repairs filesystem inconsistencies — should generally run on **unmounted** filesystems.
 ```

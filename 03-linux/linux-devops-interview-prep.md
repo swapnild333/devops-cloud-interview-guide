@@ -90,6 +90,10 @@ mount -a   # ALWAYS test fstab entries before rebooting
 **Prod angle:** Adding a new EBS volume, updating fstab without testing, then rebooting → prod outage.
 **Tip:** Always mention testing with `mount -a` before reboot.
 
+“If /etc/fstab has a wrong entry — a bad UUID, wrong filesystem type, wrong mount options — the system may fail to mount that filesystem at boot. Depending on how critical that mount is considered, that failure can cascade and drop the whole boot into emergency mode instead of continuing on to start services and reach a login prompt, which from the outside just looks like the server never came back after a reboot, with SSH timing out completely.
+
+The classic real-world mistake is adding a new EBS volume, updating fstab to auto-mount it, but not testing the entry — then rebooting later, sometimes days later for a completely unrelated reason, and only then discovering the fstab entry was wrong, usually a typo in the UUID. The fix for this is simple and should always happen before any reboot: run mount -a, which reads /etc/fstab and tries to mount everything in it immediately, live, without needing a reboot at all. Any bad entry shows up as an error right away, so you catch it in seconds instead of finding out through a production outage. I’d also add nofail as a mount option on any non-root filesystem in fstab as a second layer of protection — that way, even if a bad entry does slip through, it doesn’t block the entire boot process; the rest of the system still comes up normally and you can fix the mount afterward instead of needing emergency console access to even get back in.”
+
 ### 9. How to find the largest files in a filesystem
 `df -h` only shows filesystem-level usage, not which files/dirs are consuming space.
 ```

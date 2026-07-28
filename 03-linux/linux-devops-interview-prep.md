@@ -155,6 +155,12 @@ du -sh *
 **Prod angle:** ELK server — logs fill disk → Elasticsearch stops → observability itself is lost.
 **Tip:** "Monitoring may fail before the application does" shows operational maturity.
 
+When a filesystem hits 100%, it’s rarely a single clean failure — it’s a cascade. Applications can’t write logs, or in a database’s case, may reject transactions outright. Services relying on disk writes start crashing or degrading. The part I’d specifically highlight is that monitoring and observability tools can fail before, or at the same time as, the actual application — which is the worst possible failure mode, because it means the exact moment you need visibility into what’s going wrong, you don’t have it.
+
+A concrete example is an ELK stack server where log volume fills the disk. Elasticsearch itself starts rejecting writes — modern versions actually set indices to read-only automatically as a safety measure once disk usage crosses a watermark, specifically to avoid corruption. But Kibana depends on Elasticsearch being healthy, so dashboards go down too. Meanwhile the log shippers sending data from other servers start failing to publish and back up on their own end, so the blast radius isn’t even contained to just the one server that filled up.
+
+The root cause in a case like that is usually a missing or broken index lifecycle management policy — old daily indices were supposed to get deleted after some retention period, but that policy either was never applied correctly or silently stopped working, so indices just accumulated indefinitely instead of aging out. The fix is freeing space immediately by deleting the oldest indices manually, unblocking the read-only lock Elasticsearch set on itself, and then actually fixing the lifecycle policy so it doesn’t just happen again in another few weeks. The bigger operational point I’d make is that this is exactly why disk usage alerting can’t just live inside the same observability stack that depends on that disk — if the alerting and the thing being monitored share the same failure domain, you can lose your alerting at the exact moment you need it most
+
 ### 15. Checking disk usage and inode usage
 ```
 df -h   # storage

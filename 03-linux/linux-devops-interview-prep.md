@@ -104,6 +104,12 @@ find / -type f -exec du -h {} + | sort -rh | head
 **Prod angle:** Disk 100% full → 300GB log file → root cause: log rotation failure.
 **Tip:** Explain the drill-down: Filesystem usage → directory usage → file usage.
 
+“df -h only tells you a filesystem is full at the aggregate level — it doesn’t tell you which files or directories are actually consuming that space. So the drill-down is: start with du -sh /* to see which top-level directory is the biggest, then repeat that same command one level deeper into whichever directory stands out, continuing to narrow down until you can run find with du to list actual files, sorted largest first.
+
+In this scenario, that drill-down led from /var, into /var/log, into a specific app’s log directory, down to one single 295GB log file — while its rotated, compressed backups sitting right next to it were tiny and normal-sized. That told me rotation had worked in the past but stopped working recently for whatever reason, so I checked the logrotate config and ran it with the debug flag, which showed the postrotate script — the part that reloads the service after rotating — was failing, so logrotate was aborting the rotation entirely rather than partially completing it.
+
+For the immediate fix, I’d use truncate -s 0 on the file rather than deleting it with rm, because if the application still has that file open, which it almost certainly does since it’s actively logging to it, deleting it doesn’t actually free the disk space until the process closes that file handle — truncating it in place frees the space immediately without needing to restart anything. Then the real fix is correcting the underlying logrotate failure so this doesn’t just recur in another week.”
+
 ### 10. Runlevels / systemd targets
 Traditional runlevels: `0=shutdown, 1=single-user, 3=multi-user, 5=graphical, 6=reboot`
 Modern systemd targets: `multi-user.target`, `graphical.target`, `rescue.target`, `emergency.target`

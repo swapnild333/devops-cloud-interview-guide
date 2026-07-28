@@ -183,6 +183,10 @@ mount --bind /app /backup/app
 ```
 **Prod angle:** Docker/K8s map host directories into containers this way constantly.
 
+“A bind mount takes a directory and makes it accessible at a second location, within the same filesystem — it’s not a copy, both paths point at the exact same underlying data. If I create a file through one path, it instantly shows up through the other, and if I delete it through either path, it’s genuinely gone, not just gone from one view.
+
+This is exactly the mechanism Docker uses with -v volume mounts, and Kubernetes uses with hostPath volumes — mapping a directory on the host into a container’s filesystem. It’s how, for example, an application running inside a container can write logs that actually persist on the host, surviving even if the container itself gets destroyed and recreated. The important operational detail is that because it’s the same underlying data and not an isolated copy, actions taken inside the container genuinely affect the host — deleting a file inside the container deletes it on the host too, and file ownership follows the same UID numbers on both sides, which is a common source of permission mismatches when a container runs as root but the host-side process expects a specific non-root owner.”
+
 ### 18. Troubleshooting disk I/O slowness
 ```
 iostat

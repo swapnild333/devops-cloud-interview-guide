@@ -253,6 +253,12 @@ chown ubuntu file.txt          # owner
 chgrp developers file.txt      # group ownership
 chown appuser:appgroup /data   # combined fix example
 ```
+The three are distinct and often confused: chmod changes what actions are permitted — read, write, execute — without touching who owns the file. chown changes the user owner, and can optionally set the group at the same time using the user:group syntax. chgrp changes only the group ownership, leaving the user owner untouched.
+
+A real incident this maps to is an app failing after a migration or restore with a permission denied error on its own config file — checking ls -l shows the file is owned by root, with permissions that only give root read access, while the app actually runs as a dedicated service account like appuser, which isn’t in that group and has no access at all. This is a common leftover from a deployment or migration script that ran as root and never set the correct ownership for the actual runtime user afterward.
+
+The fix is chown, ideally the combined user:group form to set both the owner and group correctly in one atomic operation rather than needing separate chown and chgrp calls. And in practice this usually isn’t just one file — it’s often an entire directory tree that got created with the wrong owner, so I’d use chown -R recursively, while being careful about exactly which path I’m applying it to, since running a recursive ownership change against the wrong directory is a very easy way to turn a contained fix into a much bigger outage.”
+
 
 ### 25. What is `umask`?
 Defines which permission bits are stripped from newly created files/directories.

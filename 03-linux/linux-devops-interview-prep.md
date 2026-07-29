@@ -279,6 +279,10 @@ Follow Least Privilege, assign via controlled groups, ensure auditability/centra
 Use `visudo` — **never** edit `/etc/sudoers` directly.
 **Prod angle:** A dev accidentally gets full root access and deletes prod config → outage.
 
+The core principle is least privilege — people should only get exactly the access they need for their actual job, not blanket root access because it’s convenient to grant once. Practically, that means always using visudo to edit sudo permissions rather than editing /etc/sudoers directly, because visudo validates syntax before saving — a typo in a direct edit can corrupt the file and lock sudo out for everyone on the box, including yourself.
+
+Access should go through groups rather than individual users, so it’s easier to audit and revoke as team membership changes, and critically, sudo grants should be scoped to specific commands rather than ALL — so a dev who needs to restart and check the status of a service gets exactly that, not the ability to run arbitrary commands as root. The incident this maps to is a dev accidentally running a destructive command against production, thinking they were in staging — with scoped sudo commands, that specific kind of accident becomes structurally impossible, because the permission for that broad a command simply doesn’t exist, rather than just being ‘discouraged’ or something you’d only catch after the fact in logs. And speaking of logs, sudo activity should be forwarded to centralized logging, not just left in the local server’s auth log, so it’s auditable and alertable even if the server itself is the one that got affected.”
+
 ### 28. Root password lost — what do you do?
 Boot into GRUB recovery → single-user/rescue mode → remount filesystem writable → reset root password → reboot.
 

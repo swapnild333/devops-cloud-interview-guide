@@ -1,1 +1,81 @@
-heelp
+## Q1: How do you use AI in your day-to-day job?
+
+**Situation:** In my day-to-day role, I manage a .NET application deployed through Azure DevOps pipelines to an IIS-hosted Windows VM, with Cloudflare as the front door. A lot of my time used to go into manually checking pipeline logs, IIS logs, and monitoring dashboards to catch issues early.
+
+**Task:** I wanted to reduce the manual effort in my daily routine and catch problems faster, without waiting for something to break first.
+
+**Action:** I use AI tools daily in a few ways — asking an LLM to help write or review PowerShell/YAML scripts for pipeline tasks, using AI to summarize long pipeline logs so I don’t have to scroll through everything, and using AI-assisted monitoring to flag unusual patterns in traffic or errors before they become incidents. I also use AI to help draft documentation and runbooks after resolving issues, so the next person has context.
+
+**Result:** This saves me a meaningful chunk of time every day, reduces repetitive manual log-checking, and means issues get caught and documented faster. It’s become a normal part of how I work, not a separate task.
+
+-----
+
+## Q2: How would you use AI agents in a DevOps workflow?
+
+**Situation:** I deploy a .NET application through Azure DevOps pipelines to an IIS-hosted Windows VM, with Cloudflare in front as the front door. When a deployment failed or an app pool crashed, engineers had to manually go through pipeline logs and IIS Event Viewer to find out why.
+
+**Task:** I needed a faster way to find the root cause without everyone digging through logs by hand.
+
+**Action:** I added an AI agent to the pipeline. After a failed deployment, it automatically reads the pipeline logs and IIS logs, checks them against recent code changes, and posts a summary with the likely cause to our Teams channel.
+
+**Result:** Diagnosis time dropped a lot. Junior engineers could fix common issues on their own without escalating, so senior engineers had more time for harder problems.
+
+-----
+
+## Q3: How would you make your CI/CD pipeline “AI-powered”?
+
+**Situation:** Our Azure DevOps pipeline ran the full .NET test suite on every pull request, even for small changes, which slowed us down.
+
+**Task:** I needed to make the pipeline faster without losing test coverage.
+
+**Action:** I added AI-based test impact analysis to check which tests actually mattered for the changed files. I also added an LLM review step that flagged risky changes — like edits to authentication code or web.config — so they got extra review.
+
+**Result:** Pipeline time dropped by about 40%, and the AI review step caught a bad config change before it reached production.
+
+-----
+
+## Q4: How would you use AI to troubleshoot infrastructure issues?
+
+**Situation:** We saw random 502 errors between Cloudflare and our IIS app, and it wasn’t clear if the problem was Cloudflare, the network, or IIS itself.
+
+**Task:** I needed to find the real cause quickly, since checking three log sources by hand was slow.
+
+**Action:** I used AI to correlate logs — Cloudflare edge logs, IIS logs, and app pool recycle events — all lined up on one timeline to spot the pattern.
+
+**Result:** It showed the 502s happened right after app pool recycles under load. We fixed it by pre-warming the app pool and adjusting idle timeout settings, and the errors stopped.
+
+-----
+
+## Q5: What does AIOps or intelligent monitoring look like in your environment?
+
+**Situation:** Our monitoring used fixed thresholds for CPU and memory on the Windows VM, so it kept sending false alerts during normal traffic spikes.
+
+**Task:** I needed fewer false alerts but still wanted to catch real problems early.
+
+**Action:** I switched to anomaly-based monitoring in Azure Monitor, where the system learns what “normal” traffic looks like and only alerts when something is actually different from that.
+
+**Result:** Alerts dropped by about 60%, and the team started trusting alerts again and acting on them right away.
+
+-----
+
+## Q6: How would you handle an incident using AI assistance?
+
+**Situation:** During a big traffic spike, we had an outage that touched Cloudflare, a recent Azure DevOps deployment, and our IIS app all at once.
+
+**Task:** I needed to find the cause fast, without doing a slow manual investigation across all three systems.
+
+**Action:** I used an AI incident copilot to pull together Cloudflare logs, Azure DevOps deployment history, and IIS error logs into one timeline automatically.
+
+**Result:** Time to fix the issue dropped from about an hour to 15 minutes, and the timeline it created also became the first draft of our postmortem report.
+
+-----
+
+## Q7: How would you integrate AI agents directly into your DevOps workflows?
+
+**Situation:** Every deployment in our Azure DevOps pipeline needed manual approval, even simple, low-risk changes, which slowed us down.
+
+**Task:** I wanted to automate approvals for safe changes and only involve people for risky ones.
+
+**Action:** I connected an AI agent to Azure DevOps through API/MCP integration. It reviews pull requests, pipeline results, and past incidents, then auto-approves low-risk changes and flags risky ones — like infrastructure or auth changes — for human review with context.
+
+**Result:** We deployed more often, and our change failure rate stayed the same or got better, since people only had to focus on the changes that actually mattered.
